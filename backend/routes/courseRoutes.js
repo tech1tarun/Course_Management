@@ -1,16 +1,6 @@
-import express from "express";
-import {
-  getCourses,
-  createCourse,
-  updateCourse,
-  deleteCourse,
-} from "../controllers/courseController.js";
-
-const router = express.Router();
+import { protect } from "../middleware/auth.js";
 
 router.get("/", getCourses);
-router.post("/", createCourse);
-router.put("/:id", updateCourse);
-router.delete("/:id", deleteCourse);
-
-export default router;
+router.post("/", protect, createCourse); // only logged-in users
+router.put("/:id", protect, updateCourse);
+router.delete("/:id", protect, deleteCourse);
