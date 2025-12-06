@@ -1,33 +1,56 @@
+// backend/controllers/courseController.js
 import Course from "../models/Course.js";
 
-// GET all courses
 export const getCourses = async (req, res) => {
-  const courses = await Course.find();
-  res.json(courses);
+  try {
+    const courses = await Course.find().populate("createdBy", "name email");
+    res.json(courses);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
 };
 
-// CREATE a course
 export const createCourse = async (req, res) => {
-  const { title, description, instructor } = req.body;
+  try {
+    const { title, description, instructor } = req.body;
+    if (!title) return res.status(400).json({ message: "Title is required." });
 
-  const course = new Course({ title, description, instructor });
-  await course.save();
+    const course = new Course({
+      title,
+      description,
+      instructor,
+      createdBy: req.user?.id || null,
+    });
 
-  res.json({ message: "Course created!", course });
+    await course.save();
+    res.status(201).json({ message: "Course created.", course });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
 };
 
-// UPDATE a course
 export const updateCourse = async (req, res) => {
-  const { id } = req.params;
-  const updatedCourse = await Course.findByIdAndUpdate(id, req.body, {
-    new: true,
-  });
-  res.json({ message: "Course updated!", updatedCourse });
+  try {
+    const { id } = req.params;
+    const updated = await Course.findByIdAndUpdate(id, req.body, { new: true });
+    if (!updated) return res.status(404).json({ message: "Course not found." });
+    res.json({ message: "Course updated.", updated });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
 };
 
-// DELETE a course
 export const deleteCourse = async (req, res) => {
-  const { id } = req.params;
-  await Course.findByIdAndDelete(id);
-  res.json({ message: "Course deleted!" });
+  try {
+    const { id } = req.params;
+    const deleted = await Course.findByIdAndDelete(id);
+    if (!deleted) return res.status(404).json({ message: "Course not found." });
+    res.json({ message: "Course deleted." });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
 };

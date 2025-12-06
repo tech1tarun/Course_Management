@@ -1,11 +1,17 @@
+// backend/config/db.js
 import mongoose from "mongoose";
 
 const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI);
+    const uri = process.env.MONGO_URI;
+    if (!uri) throw new Error("MONGO_URI not set in .env");
+    await mongoose.connect(uri, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
     console.log("MongoDB Connected");
-  } catch (error) {
-    console.error("DB connection error: ", error);
+  } catch (err) {
+    console.error("DB connection error:", err.message || err);
     process.exit(1);
   }
 };
