@@ -1,3 +1,4 @@
+// src/pages/Courses.jsx
 import React, { useEffect, useState, useMemo } from "react";
 import {
   Box,
@@ -18,26 +19,23 @@ import {
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+
 import {
-  getCourses as apiGetCourses,
-  createCourse as apiCreateCourse,
-  updateCourse as apiUpdateCourse,
-  deleteCourse as apiDeleteCourse,
+  getCourses,
+  createCourse,
+  updateCourse,
+  deleteCourse,
 } from "../services/courseService";
 
 export default function Courses() {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(false);
-
-  // form
   const [form, setForm] = useState({
     title: "",
     description: "",
     instructor: "",
   });
   const [editingId, setEditingId] = useState(null);
-
-  // UI
   const [snack, setSnack] = useState({
     open: false,
     message: "",
@@ -50,7 +48,7 @@ export default function Courses() {
   const loadCourses = async () => {
     try {
       setLoading(true);
-      const res = await apiGetCourses();
+      const res = await getCourses();
       setCourses(res.data || []);
     } catch (err) {
       console.error(err);
@@ -64,19 +62,23 @@ export default function Courses() {
     loadCourses();
   }, []);
 
-  const showSnack = (message, severity = "success") => {
+  const showSnack = (message, severity = "success") =>
     setSnack({ open: true, message, severity });
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      // require login for create/update
+      const token = localStorage.getItem("token");
+      if (!token)
+        return showSnack("Please login to perform this action", "warning");
+
       if (editingId) {
-        await apiUpdateCourse(editingId, form);
+        await updateCourse(editingId, form);
         showSnack("Course updated", "success");
         setEditingId(null);
       } else {
-        await apiCreateCourse(form);
+        await createCourse(form);
         showSnack("Course created", "success");
       }
       setForm({ title: "", description: "", instructor: "" });
@@ -87,12 +89,12 @@ export default function Courses() {
     }
   };
 
-  const handleEdit = (course) => {
-    setEditingId(course._id);
+  const handleEdit = (row) => {
+    setEditingId(row._id);
     setForm({
-      title: course.title,
-      description: course.description,
-      instructor: course.instructor,
+      title: row.title,
+      description: row.description,
+      instructor: row.instructor,
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -104,7 +106,13 @@ export default function Courses() {
 
   const handleDelete = async () => {
     try {
-      await apiDeleteCourse(toDeleteId);
+      const token = localStorage.getItem("token");
+      if (!token) {
+        showSnack("Please login to delete", "warning");
+        return;
+      }
+
+      await deleteCourse(toDeleteId);
       showSnack("Course deleted", "success");
       setConfirmOpen(false);
       setToDeleteId(null);
@@ -115,7 +123,6 @@ export default function Courses() {
     }
   };
 
-  // DataGrid columns
   const columns = useMemo(
     () => [
       { field: "title", headerName: "Title", flex: 1, minWidth: 150 },
@@ -129,7 +136,7 @@ export default function Courses() {
       {
         field: "actions",
         headerName: "Actions",
-        width: 180,
+        width: 200,
         sortable: false,
         filterable: false,
         renderCell: (params) => {
@@ -162,7 +169,6 @@ export default function Courses() {
     []
   );
 
-  // Prepare rows for DataGrid (DataGrid expects `id` field)
   const rows = courses.map((c) => ({
     id: c._id,
     _id: c._id,
@@ -170,8 +176,6 @@ export default function Courses() {
     description: c.description,
     instructor: c.instructor,
   }));
-
-  // client-side quick filter (search)
   const filteredRows = rows.filter((r) => {
     if (!searchText) return true;
     const q = searchText.toLowerCase();
@@ -194,7 +198,6 @@ export default function Courses() {
         Manage Courses
       </Typography>
 
-      {/* Form */}
       <Card sx={{ mb: 3 }}>
         <CardContent>
           <form onSubmit={handleSubmit}>
@@ -232,7 +235,7 @@ export default function Courses() {
                 variant="contained"
                 color={editingId ? "warning" : "primary"}
               >
-                {editingId ? "Update" : "Add Course"}
+                {editingId ? "Update Course" : "Add Course"}
               </Button>
 
               {editingId && (
@@ -251,7 +254,6 @@ export default function Courses() {
         </CardContent>
       </Card>
 
-      {/* Controls: search */}
       <Box
         sx={{ mb: 2, display: "flex", justifyContent: "space-between", gap: 2 }}
       >
@@ -264,7 +266,6 @@ export default function Courses() {
         />
       </Box>
 
-      {/* DataGrid */}
       <Box sx={{ height: 520, width: "100%" }}>
         <DataGrid
           rows={filteredRows}
@@ -286,12 +287,10 @@ export default function Courses() {
         />
       </Box>
 
-      {/* Delete confirmation */}
       <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
         <DialogTitle>Delete Course</DialogTitle>
         <DialogContent>
-          Are you sure you want to delete this course? This action cannot be
-          undone.
+          Are you sure you want to delete this course?
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setConfirmOpen(false)}>Cancel</Button>
@@ -301,7 +300,6 @@ export default function Courses() {
         </DialogActions>
       </Dialog>
 
-      {/* Snackbar */}
       <Snackbar
         open={snack.open}
         autoHideDuration={3000}

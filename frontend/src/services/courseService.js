@@ -1,3 +1,4 @@
+// src/services/courseService.js
 import { API } from "../api";
 
 export const getCourses = () => API.get("/api/courses");

@@ -1,35 +1,26 @@
-import { useState } from "react";
-import { ThemeProvider, createTheme, CssBaseline, Box } from "@mui/material";
-import Sidebar from "./components/Sidebar";
+// src/App.jsx
+import React from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Courses from "./pages/Courses";
-
-const mdTheme = createTheme({
-  palette: {
-    mode: "light",
-    primary: { main: "#1976d2" },
-  },
-});
+import LoginPage from "./pages/Login";
+import RegisterPage from "./pages/Register";
 
 function App() {
-  const [mobileOpen, setMobileOpen] = useState(false);
-
-  const handleDrawerToggle = () => {
-    setMobileOpen(!mobileOpen);
-  };
+  const token = localStorage.getItem("token");
 
   return (
-    <ThemeProvider theme={mdTheme}>
-      <CssBaseline />
-      <Box sx={{ display: "flex" }}>
-        <Navbar onDrawerToggle={handleDrawerToggle} />
-        <Sidebar mobileOpen={mobileOpen} onDrawerToggle={handleDrawerToggle} />
-
-        <Box component="main" sx={{ flexGrow: 1, p: 3, mt: 8 }}>
-          <Courses />
-        </Box>
-      </Box>
-    </ThemeProvider>
+    <BrowserRouter>
+      <Navbar />
+      <div style={{ padding: 16 }}>
+        <Routes>
+          <Route path="/" element={<Navigate to="/courses" replace />} />
+          <Route path="/courses" element={<Courses />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+        </Routes>
+      </div>
+    </BrowserRouter>
   );
 }
 
