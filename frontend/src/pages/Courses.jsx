@@ -48,10 +48,14 @@ export default function Courses() {
   const loadCourses = async () => {
     try {
       setLoading(true);
-      const res = await getCourses();
-      setCourses(res.data || []);
+      const res = await getCourses(); // your API call
+      console.log("GET /api/courses response:", res);
+      const data = res.data || [];
+      console.log("parsed courses:", data);
+      setCourses(data);
+      console.log("state courses set, length =", data.length);
     } catch (err) {
-      console.error(err);
+      console.error("Error loading courses:", err);
       showSnack("Failed to load courses", "error");
     } finally {
       setLoading(false);
@@ -169,13 +173,16 @@ export default function Courses() {
     []
   );
 
+  // ensure rows have an `id` field (DataGrid requires this)
   const rows = courses.map((c) => ({
-    id: c._id,
-    _id: c._id,
+    id: c._id || c.id || Math.random().toString(36).slice(2), // fallback id (debug only)
+    _id: c._id || c.id,
     title: c.title,
     description: c.description,
     instructor: c.instructor,
+    createdAt: c.createdAt,
   }));
+
   const filteredRows = rows.filter((r) => {
     if (!searchText) return true;
     const q = searchText.toLowerCase();
@@ -268,22 +275,16 @@ export default function Courses() {
 
       <Box sx={{ height: 520, width: "100%" }}>
         <DataGrid
-          rows={filteredRows}
+          rows={rows}
           columns={columns}
           pageSizeOptions={[5, 10, 25]}
-          initialState={{
-            pagination: { paginationModel: { pageSize: 10, page: 0 } },
-          }}
-          paginationModel={{ pageSize: 10 }}
+          initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
           loading={loading}
           disableRowSelectionOnClick
+          autoHeight={false} // see note below
+          sx={{ minHeight: 520 }} // ensures grid has height
           slots={{ toolbar: GridToolbar }}
-          slotProps={{
-            toolbar: {
-              showQuickFilter: true,
-              quickFilterProps: { debounceMs: 200 },
-            },
-          }}
+          slotProps={{ toolbar: { showQuickFilter: true } }}
         />
       </Box>
 
