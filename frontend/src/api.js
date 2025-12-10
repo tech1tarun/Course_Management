@@ -5,7 +5,6 @@ export const API = axios.create({
   baseURL: "http://localhost:5000",
 });
 
-// helper to apply token to axios defaults
 export const setAuthToken = (token) => {
   if (token) {
     API.defaults.headers.common["Authorization"] = `Bearer ${token}`;
@@ -16,8 +15,6 @@ export const setAuthToken = (token) => {
   }
 };
 
-// initialize from storage (so page reload keeps auth)
+// initialize from storage
 const token = localStorage.getItem("token");
-if (token) {
-  API.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-}
+if (token) API.defaults.headers.common["Authorization"] = `Bearer ${token}`;
